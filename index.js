@@ -1,4 +1,4 @@
-console.info("Loading reactivedb/obs")
+console.info("Loading kobs")
 
 // const log = console.log
 const log = () => {}
