@@ -190,8 +190,8 @@ exports.repeatWhen = (canRun, cb, name) => {
 exports.observe = function(obs, cb) {
   return () =>
     autorun(function() {
-      obs()
-      setTimeout(cb) // faudrait-il en profiter pour envoyer la valeur de obs ?
+      const v = obs()
+      setTimeout(() => cb(v)) // faudrait-il en profiter pour envoyer la valeur de obs ?
     })
 }
 
