@@ -114,7 +114,7 @@ Object.assign(exports.Computed.prototype, {
   },
 })
 
-const autorun = (exports.autorun = (fn, name) => {
+const autorun = (exports.autorun = (fn, name, after) => {
   const me = {
     name,
     deps: new Set(),
@@ -153,6 +153,7 @@ const autorun = (exports.autorun = (fn, name) => {
       log("autorun cancelled during run", name)
     }
     difference(me.oldDeps, me.deps).forEach(dep => dep.removeObserver(me))
+    if (after) after() // éxécuté en synchrone mais sans tracking des dépendances
   }
   me.compute(me.unobserve)
   return me.unobserve
@@ -187,11 +188,25 @@ exports.repeatWhen = (canRun, cb, name) => {
   return () => (repeat = false)
 }
 
+exports.observeSync = function(obs, cb) {
+  let oldVal, newVal
+  return autorun(
+    () => {
+      newVal = obs()
+    },
+    null,
+    () => {
+      cb(newVal, oldVal)
+      oldVal = newVal
+    }
+  )
+}
+// asynchronous version of observe
 exports.observe = function(obs, cb) {
   return () =>
     autorun(function() {
       const v = obs()
-      setTimeout(() => cb(v)) // faudrait-il en profiter pour envoyer la valeur de obs ?
+      setTimeout(() => cb(v))
     })
 }
 

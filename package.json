@@ -12,5 +12,9 @@
   "bugs": {
     "url": "https://github.com/KAESapps/kobs/issues"
   },
-  "homepage": "https://github.com/KAESapps/kobs#readme"
+  "homepage": "https://github.com/KAESapps/kobs#readme",
+  "prettier": {
+    "trailingComma": "es5",
+    "semi": false
+  }
 }
