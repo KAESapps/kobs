@@ -178,20 +178,27 @@ exports.transaction = (fn) => {
 // permet d'éxécuter une fonction en continu dès que la condition est vraie
 // si la fonction retourne un promise, la prochaine itération attend qu'il soit terminé (résolu ou rejeté)
 exports.repeatWhen = (canRun, cb, name) => {
+  let cancel
   let repeat = true
-  const autorunFn = (cancel) => {
+  const autorunFn = (internalCancel) => {
     const canRunValue = canRun()
     if (!canRunValue) return
     console.log("repeatWhen condition truthy", { name, canRunValue })
-    cancel() // on se désabonne avant d'exécuter le callback pour être sûr de ne déclencher qu'un run à la fois
+    internalCancel() // on se désabonne avant d'exécuter le callback pour être sûr de ne déclencher qu'un run à la fois
     // peut-être pas très logique de renvoyer la valeur du canRun dans le cb mais c'est pratique quand on veut exécuter le cb avec le résultat (truthy) du canRun
-    Promise.resolve(cb(canRunValue)).then(() => {
-      if (!repeat) return console.log("repeatWhen canceled", name)
-      autorun(autorunFn, "repeatWhenAgain") // puis on se réabonne après le run (en asynchrone), pour déclencher le suivant
-    })
+    // on execute le cb en asynchrone au cas où il ferait une mutation pour ne pas déclencher en boucle
+    Promise.resolve()
+      .then(() => cb(canRunValue))
+      .then(() => {
+        if (!repeat) return console.log("repeatWhen canceled", name)
+        cancel = autorun(autorunFn, "repeatWhenAgain") // puis on se réabonne après le run (en asynchrone), pour déclencher le suivant
+      })
   }
-  autorun(autorunFn, "repeatWhenInit")
-  return () => (repeat = false)
+  cancel = autorun(autorunFn, "repeatWhenInit")
+  return () => {
+    cancel && cancel()
+    repeat = false
+  }
 }
 
 exports.observeSync = function (obs, cb) {
